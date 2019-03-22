@@ -4,16 +4,18 @@ set --universal pure_version 2.1.2 # used for bug report
 _pure_set_default pure_color_primary (set_color blue)
 _pure_set_default pure_color_info (set_color cyan)
 _pure_set_default pure_color_mute (set_color brblack)
-_pure_set_default pure_color_success (set_color magenta)
+_pure_set_default pure_color_success (set_color cyan)
 _pure_set_default pure_color_normal (set_color normal)
 _pure_set_default pure_color_danger (set_color red)
 _pure_set_default pure_color_light (set_color white)
 _pure_set_default pure_color_warning (set_color yellow)
 _pure_set_default pure_color_dark (set_color black)
+_pure_set_default pure_color_hilite (set_color magenta)
+
 
 # Prompt
-_pure_set_default pure_symbol_prompt "❯"
-_pure_set_default pure_symbol_reverse_prompt "❮"  # used for VI mode
+_pure_set_default pure_symbol_prompt "»"
+_pure_set_default pure_symbol_reverse_prompt "«"  # used for VI mode
 _pure_set_default pure_color_prompt_on_error $pure_color_danger
 _pure_set_default pure_color_prompt_on_success $pure_color_success
 
@@ -34,6 +36,12 @@ _pure_set_default pure_color_ssh_hostname $pure_color_mute
 _pure_set_default pure_color_ssh_separator $pure_color_mute
 _pure_set_default pure_color_ssh_user_normal $pure_color_mute
 _pure_set_default pure_color_ssh_user_root $pure_color_light
+
+# AWS
+_pure_set_default pure_color_aws $pure_color_hilite
+
+# Kube
+_pure_set_default pure_color_kube $pure_color_warning
 
 # Virtualenv for Pyhon
 _pure_set_default pure_color_virtualenv $pure_color_mute
