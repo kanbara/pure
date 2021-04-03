@@ -3,7 +3,7 @@ set color_error (set_color --bold red)
 set color_white (set_color white)
 set color_normal (set_color normal)
 
-function pure::set_fish_config_path
+function pure_set_fish_config_path
     printf "\tSet environment variable: %s\n" "\$FISH_CONFIG_DIR"
     if test (count $argv) -ge 1
         set -gx FISH_CONFIG_DIR $argv[1]
@@ -12,7 +12,7 @@ function pure::set_fish_config_path
     end
 end
 
-function pure::set_pure_install_path
+function pure_set_pure_install_path
     printf "\tSet environment variable: %s\n" "\$PURE_INSTALL_DIR"
     if test (count $argv) -ge 2
         set -gx PURE_INSTALL_DIR $argv[2]
@@ -21,30 +21,37 @@ function pure::set_pure_install_path
     end
 end
 
-function pure::fetch_source
+function pure_scaffold_fish_directories
+    printf "\tScaffolding fish directories"
+
+    mkdir -p $FISH_CONFIG_DIR/functions/
+    mkdir -p $FISH_CONFIG_DIR/conf.d/
+end
+
+function pure_fetch_source
     printf "\tFetching theme's source"
 
-    set --local package "https://github.com/rafaelrinaldi/pure/archive/master.tar.gz"
-    mkdir --parents $PURE_INSTALL_DIR
+    set --local package "https://github.com/pure-fish/pure/archive/master.tar.gz"
+    mkdir -p $PURE_INSTALL_DIR
 
-    command curl --show-error --location "$package" | command tar -xzf- -C $PURE_INSTALL_DIR --strip-components=1; or begin;
+    command curl --silent --show-error --location "$package" | command tar -xzf- -C $PURE_INSTALL_DIR --strip-components=1; or begin;
         printf "%sError: fetching Pure sources failed%s" "$color_error" "$color_normal"
         return 1
     end
 end
 
-function pure::backup_existing_theme
+function pure_backup_existing_theme
     printf "\tBackuping existing theme"
     set --local old_prompt $FISH_CONFIG_DIR/functions/fish_prompt.fish
     set --local backup_prompt $old_prompt.ignore
-    
+
     if test -f "$old_prompt"
-        mv "$old_prompt" "$backup_prompt"
-        printf "\t\tPrevious config saved to: %s%s%s." "$color_white" "$backup_prompt" "$color_normal"
+        mv "$old_prompt" "$backup_prompt"; pure_exit_symbol $status
+        printf "\tPrevious config saved to: %s%s%s." "$color_white" "$backup_prompt" "$color_normal"
     end
 end
 
-function pure::enable_autoloading
+function pure_enable_autoloading
     printf "\tEnabling autoloading for pure's functions on shell init"
     touch "$FISH_CONFIG_DIR/config.fish"
     if not grep -q "pure.fish" $FISH_CONFIG_DIR/config.fish
@@ -52,47 +59,60 @@ function pure::enable_autoloading
         echo "set fish_function_path $PURE_INSTALL_DIR/functions/" '$fish_function_path' >> $FISH_CONFIG_DIR/config.fish
         echo "source $PURE_INSTALL_DIR/conf.d/pure.fish" >> $FISH_CONFIG_DIR/config.fish
     end
-    ln -sf $PURE_INSTALL_DIR/fish_prompt.fish $FISH_CONFIG_DIR/functions/
 end
 
-function pure::enable_theme
+function pure_symlinks_assets
+    printf "\tLink pure's configuration and functions to fish config directory"
+    for pure_function in $PURE_INSTALL_DIR/functions/*.fish
+        ln -sf $pure_function $FISH_CONFIG_DIR/functions/
+    end
+    for pure_config in $PURE_INSTALL_DIR/conf.d/*
+        ln -sf $pure_config $FISH_CONFIG_DIR/conf.d/
+    end
+end
+
+function pure_enable_theme
     printf "\tEnabling theme"
     set fish_function_path $PURE_INSTALL_DIR/functions/ $fish_function_path
+
     source $FISH_CONFIG_DIR/config.fish
 end
 
-function pure::clean_after_install
+function pure_clean_after_install
     printf "\tCleaning after install"
-    functions --erase pure::set_fish_config_dir
-    functions --erase pure::set_pure_install_dir
-    functions --erase pure::fetch_source
-    functions --erase pure::backup_existing_theme
-    functions --erase pure::enable_autoloading
-    functions --erase pure::enable_theme
+    functions --erase pure_set_fish_config_dir
+    functions --erase pure_set_pure_install_dir
+    functions --erase pure_fetch_source
+    functions --erase pure_backup_existing_theme
+    functions --erase pure_enable_autoloading
+    functions --erase pure_symlinks_assets
+    functions --erase pure_enable_theme
 end
 
-function pure::success
+function pure_success
     echo $color_success "✔" $color_normal
 end
-function pure::error
+function pure_error
     echo $color_error "✖" $color_normal
 end
 
-function pure::exit_symbol
+function pure_exit_symbol
     if test $argv[1] -eq 0
-        pure::success
+        pure_success
     else
-        pure::error
+        pure_error
     end
 end
 
 function install_pure
     printf "Installing Pure theme\n"
-    pure::set_fish_config_path $argv
-    pure::set_pure_install_path $argv
-    pure::fetch_source; pure::exit_symbol $status
-    pure::backup_existing_theme; pure::exit_symbol $status
-    pure::enable_autoloading; pure::exit_symbol $status
-    pure::enable_theme; pure::exit_symbol $status
-    pure::clean_after_install; pure::exit_symbol $status
+    pure_set_fish_config_path $argv
+    pure_set_pure_install_path $argv
+    pure_scaffold_fish_directories; pure_exit_symbol $status
+    pure_fetch_source; pure_exit_symbol $status
+    pure_backup_existing_theme; pure_exit_symbol $status
+    pure_enable_autoloading; pure_exit_symbol $status
+    pure_symlinks_assets; pure_exit_symbol $status
+    pure_enable_theme; pure_exit_symbol $status
+    pure_clean_after_install; pure_exit_symbol $status
 end
